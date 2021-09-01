@@ -1,35 +1,41 @@
 // Library Imports
-const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
+const http = require('http');
+const express = require('express');
+const { Server } = require("socket.io");
 
-// Local Imports
-const socketAAP = require('./src/socket/aap_server');
-const socketCMS = require('./src/socket/cms_server');
 
-// App creation
+// App setup
 const app = express();
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));``
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
-// Database Connection
-mongoose.connect('mongodb://localhost:27017/dtn-backend-db', { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true }).then(() => {
-  console.log('Connected to database');
+
+// Listen for HTTP requests on port 7474
+app.listen(7474, () => {
+  console.log('DTN Backend up and runnig!! 🛰️ 🛰️ 🛰️');
 });
 
-// HTTP Calls for CMS Backend
-app.use('/aap', require('./src/routes/aap'));
 
-// Socket connection for CMS Backend
-const socketServerCMS = null;
-
-// Socket connection for DTN Node
-const socketServerAAP = socketAAP.createServer();
-socketServerAAP.listen(3001, "localhost");
+// Socket io server setup
+const server = http.createServer(app);
+const io = new Server(server);
 
 
-// App listening to port 2424
-app.listen(2424, () => {
-  console.log('DTN Backend up and runnig!! 🛰️🛰️🛰️');
+// (Move to a separate file)
+io.on("connection", (socket) => {
+  console.log("Socket connection made!");
+
+  socket.emit("message", "Hello from the DTN backend!");
+
+  socket.on("message", (data) => {
+    console.log("Received CMS Backend message:", data);
+  });
+});
+
+
+// Listen for socket requests on port 7575
+server.listen(7575, () => {
+  console.log('Socket connection for DTN Backend up and runnig!! 🛰️ 🛰️ 🛰️');
 });
