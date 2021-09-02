@@ -27,10 +27,24 @@ const io = new Server(server);
 io.on("connection", (socket) => {
   console.log("Socket connection made!");
 
+  // Wellcome message
   socket.emit("message", "Hello from the DTN backend!");
 
+  // Listen for new DTN messages, to update local CMS Backends
   socket.on("message", (data) => {
+    console.log("Received DTN message:", data);
+    console.log("Forwarding DTN message to CMS Backend...");
+  });
+
+  // Listen for new CMS Backend messages, to update non-local CMS Backends
+  socket.on("cms-message", (data) => {
     console.log("Received CMS Backend message:", data);
+    console.log("Forwarding CMS message to DTN...");
+  });
+
+  // Goodbye message
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected!");
   });
 });
 

@@ -55,10 +55,6 @@ const getDefinedValues = (obj) => {
       newObj[key] = obj[key];
     }
   });
-
-  console.log("pingo", obj);
-
-  console.log("pingocho", newObj);
   return newObj;
 }
 
