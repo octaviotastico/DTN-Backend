@@ -1,5 +1,4 @@
 const struct = require('python-struct');
-const uuid = require('uuid').v4;
 
 const commons = require('./constants');
 
@@ -17,7 +16,7 @@ const serializeMessage = ({ messageType, eid=null, payload=null, bundle_id=null 
 
   // Sending my EID
   if (messageType in [REGISTER, SENDBUNDLE, RECVBUNDLE, WELCOME]) {
-    const newEID = eid || uuid();
+    const newEID = eid || AGENT_ID;
     msg.push(struct.pack("!H", newEID.length));
     msg.push(Buffer.from(newEID, "ascii"));
   }
