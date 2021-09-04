@@ -11,6 +11,22 @@ const AAPMessageTypes = {
   PING: 0x8,
 };
 
+const AAPMessageTypesStr = {
+  ACK: 'ACK',
+  NACK: 'NACK',
+  REGISTER: 'REGISTER',
+  SENDBUNDLE: 'SENDBUNDLE',
+  RECVBUNDLE: 'RECVBUNDLE',
+  SENDCONFIRM: 'SENDCONFIRM',
+  CANCELBUNDLE: 'CANCELBUNDLE',
+  WELCOME: 'WELCOME',
+  PING: 'PING',
+};
+
+const AAPSupportedVersions = [1];
+
 module.exports = {
   AAPMessageTypes,
+  AAPMessageTypesStr,
+  AAPSupportedVersions,
 };

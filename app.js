@@ -9,7 +9,7 @@ const net = require('net');
 
 // Local Imports
 const commons = require('./src/commons/functions');
-const { serializeMessage } = require('./src/commons/messages');
+const { serializeMessage, deserializeMessage } = require('./src/commons/messages');
 const { AAPMessageTypes } = require('./src/commons/constants');
 
 
@@ -89,38 +89,7 @@ server.listen(TCP_PORT, () => {
 
 
 
-// Step 0: Setup - Create the netServer and the netClient
-
-console.log(`[DEBUG] Server will listen to: ${DTNetwork_HOST}:${DTNetwork_PORT}`);
-console.log(`[DEBUG] Server will register with: ${AGENT_ID}`);
-
-const netServer = net.createServer((c) => {
-  console.log('[netServer] Client connected');
-
-  c.on('message', (msg) => {
-    console.log('[netServer] Received `message`, MSG:', msg.toString());
-  });
-
-  c.on('*', (event, msg) => {
-    console.log('[netServer] Received `*`, EVENT:', event);
-    console.log('[netServer] Received `*`, MSG:', msg);
-  });
-
-}).listen({
-  host: DTNetwork_HOST, // 'localhost',
-  port: DTNetwork_PORT, // 4243,
-  family: 4, // ipv4, socket.AF_INET
-});
-
-netServer.on('error', function (e) {
-  if (e.code == 'EADDRINUSE') {
-    console.log('Address in use, retrying...');
-    setTimeout(function () {
-      netServer.close();
-      netServer.listen(DTNetwork_PORT, DTNetwork_HOST);
-    }, 1);
-  }
-});
+// Step 0: Setup - Create the netClient
 
 const netClient = net.createConnection(DTNetwork_PORT, DTNetwork_HOST, () => {
   console.log('[netClient] Connected');
@@ -132,3 +101,15 @@ netClient.write(serializeMessage({
   messageType: AAPMessageTypes.REGISTER,
   eid: AGENT_ID,
 }));
+
+// Step 2: Listen for DTN messages from instance A
+
+netClient.on('data', (data) => {
+  console.log('[netClient on data] Received data:');
+
+  const deserializedMessage = deserializeMessage(data);
+  const deserializedPayload = deserializedMessage?.payload?.toString('utf8');
+  console.log('Deserialized message:', deserializedMessage);
+  console.log('Deserialized payload:', deserializedPayload);
+  // console.log(data);
+});
