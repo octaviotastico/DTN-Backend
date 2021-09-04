@@ -4,22 +4,27 @@ const http = require('http');
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { Server } = require("socket.io");
+const net = require('net');
 
 
 // Local Imports
 const commons = require('./src/commons/functions');
-const client = require('./src/socket/client');
+const { serializeMessage } = require('./src/commons/messages');
+const { AAPMessageTypes } = require('./src/commons/constants');
 
 
 // Parsing parameters (if given)
 var args = process.argv.slice(2);
+
 // DTN Backend (our) Variables
 const HTTP_PORT = commons.parseParameters(args, '--http-port', 'HTTP_PORT', 7474);
-const TCP_PORT = commons.parseParameters(args, '--tcp-port', 'TCP_PORT', 4243); // 7575
+const TCP_PORT = commons.parseParameters(args, '--tcp-port', 'TCP_PORT', 7575);
 const AGENT_ID = commons.parseParameters(args, '--agent-id', 'AGENT_ID', 'bundlesink'); // uuidv4());
+
 // CMS Backend (their) Variables
 const CMS_HOST = commons.parseParameters(args, '--cms-host', 'CMS_HOST', 'http://localhost');
 const CMS_PORT = commons.parseParameters(args, '--cms-port', 'CMS_PORT', 2525);
+
 // DTN (network) Variables
 const DTNetwork_HOST = commons.parseParameters(args, '--dtn-host', 'DTN_HOST', 'localhost');
 const DTNetwork_PORT = commons.parseParameters(args, '--dtn-port', 'DTN_PORT', 4243);
@@ -33,6 +38,8 @@ global.CMS_HOST = CMS_HOST;
 global.CMS_PORT = CMS_PORT;
 global.DTNetwork_HOST = DTNetwork_HOST;
 global.DTNetwork_PORT = DTNetwork_PORT;
+
+/* COMMENTED TEMPORARILY
 
 
 // App setup
@@ -52,27 +59,7 @@ app.listen(HTTP_PORT, () => {
 const server = http.createServer(app);
 const io = new Server(server);
 
-
-
-// Delete plssss
-const testttt__DTN_to_DTNBackend_to_CMSBackend = (data) => {
-  client.sendCMSMessage({
-    dest_eid: `${CMS_HOST}:${CMS_PORT}`,
-    message: data,
-    messageType: 'update',
-  });
-}
-
-// Delete plssss
-const testttt__Register_and_wait_for_DTN_packet = () => {
-  client.registerMessage({
-    dest_eid: `${DTNetwork_HOST}:${DTNetwork_PORT}`,
-  })
-}
-
-
-
-// (Move to a separate file)
+// Socket server listening for CMS connections
 io.on("connection", (socket) => {
   console.log("Socket connection made!");
 
@@ -83,13 +70,6 @@ io.on("connection", (socket) => {
   socket.on("message", (data) => {
     console.log("Received DTN message:", data);
     console.log("Forwarding DTN message to CMS Backend...");
-    testttt__DTN_to_DTNBackend_to_CMSBackend(data);
-  });
-
-  // Listen for new CMS Backend messages, to update non-local CMS Backends
-  socket.on("cms-message", (data) => {
-    console.log("Received CMS Backend message:", data);
-    console.log("Forwarding CMS message to DTN...");
   });
 
   // Goodbye message
@@ -99,8 +79,56 @@ io.on("connection", (socket) => {
 });
 
 
-// Listen for socket requests on port 7575
+// Listen for CMS Backend socket requests on port 7575
 server.listen(TCP_PORT, () => {
   console.log('Socket connection for DTN Backend up and runnig!! 🛰️ 🛰️ 🛰️');
-  testttt__Register_and_wait_for_DTN_packet();
 });
+
+
+*/
+
+
+
+// Step 0: Setup - Create the netServer and the netClient
+
+console.log(`[DEBUG] Server will listen to: ${DTNetwork_HOST}:${DTNetwork_PORT}`);
+console.log(`[DEBUG] Server will register with: ${AGENT_ID}`);
+
+const netServer = net.createServer((c) => {
+  console.log('[netServer] Client connected');
+
+  c.on('message', (msg) => {
+    console.log('[netServer] Received `message`, MSG:', msg.toString());
+  });
+
+  c.on('*', (event, msg) => {
+    console.log('[netServer] Received `*`, EVENT:', event);
+    console.log('[netServer] Received `*`, MSG:', msg);
+  });
+
+}).listen({
+  host: DTNetwork_HOST, // 'localhost',
+  port: DTNetwork_PORT, // 4243,
+  family: 4, // ipv4, socket.AF_INET
+});
+
+netServer.on('error', function (e) {
+  if (e.code == 'EADDRINUSE') {
+    console.log('Address in use, retrying...');
+    setTimeout(function () {
+      netServer.close();
+      netServer.listen(DTNetwork_PORT, DTNetwork_HOST);
+    }, 1);
+  }
+});
+
+const netClient = net.createConnection(DTNetwork_PORT, DTNetwork_HOST, () => {
+  console.log('[netClient] Connected');
+});
+
+// Step 1: Register to instance B of DTN with agent ID 'bundlesink'
+
+netClient.write(serializeMessage({
+  messageType: AAPMessageTypes.REGISTER,
+  eid: AGENT_ID,
+}));
