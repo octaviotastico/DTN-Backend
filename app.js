@@ -4,14 +4,13 @@ const http = require('http');
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { Server } = require("socket.io");
+const io = require("socket.io-client");
 const net = require('net');
-
 
 // Local Imports
 const commons = require('./src/commons/functions');
 const { serializeMessage, deserializeMessage } = require('./src/commons/messages');
 const { AAPMessageTypes } = require('./src/commons/constants');
-
 
 // Parsing parameters (if given)
 var args = process.argv.slice(2);
@@ -39,7 +38,10 @@ global.CMS_PORT = CMS_PORT;
 global.DTNetwork_HOST = DTNetwork_HOST;
 global.DTNetwork_PORT = DTNetwork_PORT;
 
-/* COMMENTED TEMPORARILY
+
+/////////////////////////////
+///// HTTP Server setup /////
+/////////////////////////////
 
 
 // App setup
@@ -55,12 +57,17 @@ app.listen(HTTP_PORT, () => {
 });
 
 
+////////////////////////////////
+///// CMS connection setup /////
+////////////////////////////////
+
+
 // Socket io server setup
 const server = http.createServer(app);
-const io = new Server(server);
+const client = new Server(server);
 
 // Socket server listening for CMS connections
-io.on("connection", (socket) => {
+client.on("connection", (socket) => {
   console.log("Socket connection made!");
 
   // Wellcome message
@@ -85,31 +92,33 @@ server.listen(TCP_PORT, () => {
 });
 
 
-*/
-
+////////////////////////////////
+///// DTN connection setup /////
+////////////////////////////////
 
 
 // Step 0: Setup - Create the netClient
-
 const netClient = net.createConnection(DTNetwork_PORT, DTNetwork_HOST, () => {
   console.log('[netClient] Connected');
 });
 
-// Step 1: Register to instance B of DTN with agent ID 'bundlesink'
+const cmsClient = io.connect(`${CMS_HOST}:${CMS_PORT}`);
 
+// Step 1: Register to instance B of DTN with agent ID 'bundlesink'
 netClient.write(serializeMessage({
   messageType: AAPMessageTypes.REGISTER,
   eid: AGENT_ID,
 }));
 
 // Step 2: Listen for DTN messages from instance A
-
 netClient.on('data', (data) => {
   console.log('[netClient on data] Received data:');
 
   const deserializedMessage = deserializeMessage(data);
-  const deserializedPayload = deserializedMessage?.payload?.toString('utf8');
+  const deserializedPayload = deserializedMessage?.payload?.toString('utf8') || "";
   console.log('Deserialized message:', deserializedMessage);
   console.log('Deserialized payload:', deserializedPayload);
-  // console.log(data);
+
+  // Step 3: Forward DTN messages to CMS Backend
+  cmsClient.emit("text-message", deserializedMessage);
 });
