@@ -11,7 +11,7 @@ const checkUndefined = (obj, name) => {
 
 const parseParameters = (args, argName, envName, defaultValue) => {
   if (args.includes(argName))
-    return args[args.indexOf('--http-port') + 1];
+    return args[args.indexOf(argName) + 1];
   if (process.env[envName])
     return process.env[envName];
   return defaultValue;

@@ -3,7 +3,7 @@ const io = require("socket.io-client")
 
 // Local Imports
 const { checkUndefined } = require('../commons/functions');
-const { serializeMessage } = require('../commons/messages');
+const { serializeMessage } = require('../services/messages');
 const { AAPMessageTypes } = require('../commons/constants');
 
 // Register only, if you don't want to send anyting and just listen for new messages.

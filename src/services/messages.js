@@ -1,6 +1,6 @@
 const struct = require('python-struct');
 
-const commons = require('./constants');
+const commons = require('../commons/constants');
 
 const serializeMessage = ({ messageType, eid=null, payload=null, bundle_id=null }) => {
   const msg = [struct.pack("B", 0x10 | (messageType & 0xF))];
@@ -15,24 +15,25 @@ const serializeMessage = ({ messageType, eid=null, payload=null, bundle_id=null 
   } = commons.AAPMessageTypes;
 
   // Sending my EID
-  if (messageType in [REGISTER, SENDBUNDLE, RECVBUNDLE, WELCOME]) {
+  if ([REGISTER, SENDBUNDLE, RECVBUNDLE, WELCOME].includes(messageType)) {
     const newEID = eid || AGENT_ID;
     msg.push(struct.pack("!H", newEID.length));
     msg.push(Buffer.from(newEID, "ascii"));
   }
 
   // Sending Payload
-  if (messageType in [SENDBUNDLE, RECVBUNDLE]) {
+  if ([SENDBUNDLE, RECVBUNDLE].includes(messageType)) {
     msg.push(struct.pack("!Q", payload.length));
     msg.push(payload);
   }
 
   // Sending Bundle ID
-  if (messageType in [SENDCONFIRM, CANCELBUNDLE]) {
+  if ([SENDCONFIRM, CANCELBUNDLE].includes(messageType)) {
     msg.push(struct.pack("!Q", bundle_id.length));
     msg.push(bundle_id);
   }
 
+  // This is not working properly :(
   return msg.join('');
 };
 
@@ -118,10 +119,11 @@ const deserializeMessage = (buffer) => {
   }
 
   return {
-    messageType,
-    eid,
-    payload,
-    bundle_id,
+    eid: eid,
+    payload: payload,
+    messageType: messageType,
+    messageTypeStr: commons.AAPMessageTypeToStr[messageType],
+    bundle_id: bundle_id,
   };
 };
 
