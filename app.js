@@ -80,6 +80,11 @@ socketServer.on("connection", (socket) => {
     }));
   });
 
+  // Catch any socket connection errors
+  socket.on("error", (error) => {
+    console.log("Socket error:", error);
+  });
+
   // Goodbye message
   socket.on("disconnect", () => {
     console.log("Socket disconnected!");
@@ -117,4 +122,8 @@ netClient.on('data', (data) => {
     ...deserializedMessage,
     payload: deserializedPayload,
   });
+});
+
+netClient.on("error", (err) => {
+  console.log("[netClient on error]", err);
 });
