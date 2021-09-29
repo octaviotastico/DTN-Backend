@@ -47,9 +47,9 @@ mongoose.connect('mongodb://localhost:27017/cms-db', { useNewUrlParser: true, us
 });
 
 
-////////////////////////////////////////
-///// CMS Backend connection setup /////
-////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+///// Socket server for listening to CMS Backend connections /////
+//////////////////////////////////////////////////////////////////
 
 
 const socketServer = socket_io(TCP_PORT);
@@ -80,6 +80,10 @@ socketServer.on("connection", (socket) => {
     }));
   });
 
+  socket.on("message", (data) => {
+    console.log("Received message from local CMS!", data);
+  });
+
   // Catch any socket connection errors
   socket.on("error", (error) => {
     console.log("Socket error:", error);
@@ -92,9 +96,9 @@ socketServer.on("connection", (socket) => {
 });
 
 
-////////////////////////////////
-///// DTN connection setup /////
-////////////////////////////////
+////////////////////////////////////////////////////////////////////
+///// Socket client connection to send messages to CMS Backend /////
+////////////////////////////////////////////////////////////////////
 
 
 // Step 0: Setup - Create the netClient and cmsClient
@@ -112,7 +116,7 @@ netClient.on('data', (data) => {
   console.log('[netClient on data] Received data:');
 
   const deserializedMessage = deserializeMessage(data);
-  // if (deserializedMessage.error) return; // TODO: Handle this better
+  if (deserializedMessage.error) return; // TODO: Handle this better
   const deserializedPayload = deserializedMessage?.payload?.toString('utf8') || "";
   console.log('Deserialized message:', deserializedMessage);
   console.log('Deserialized payload:', deserializedPayload);
