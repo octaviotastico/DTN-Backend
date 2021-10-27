@@ -1,3 +1,38 @@
+# [Deprecated]
+
+## Reat this first, please.
+
+This backend will no longer be used, or updated.
+
+It has been replaced for this new idea: https://github.com/octaviotastico/delay-tolerant-mongoose
+
+
+The idea behind this DTN-Backend was that you could connect your app backend to this backend in order to make it "delay tolerant proof".
+
+But I changed that idea to simply create a database wrapper, such that when you update that database, those changes would be reflected in other non-local instances, distributed through a DTN network.
+
+That idea would make it easier for you to make your application delay tolerant proof, without any work of opening sockets, or configuration to connecting it to this "DTN-Backend", or any of that stuff...
+
+The only thing you would need to do is: instead of installing mongoose by:
+
+> `npm i mongoose`
+
+or
+
+> `yarn add mongoose`
+
+What you would do instead, is to install "delay-tolerant-mongoose", by doing:
+
+> `npm i delay-tolerant-mongoose`
+
+or
+
+> `yarn add delay-tolerant-mongoose`
+
+And it will be used exactly the same, but instead of doing `Model.save(document)`, you will do `Model.dtSave(document)`, and that's all :)
+
+## Old readme:
+
 # DTN-Backend
 
 ## About
